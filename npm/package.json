@@ -1,0 +1,31 @@
+{
+  "name": "@upbit-official/upbit-cli",
+  "description": "Upbit CLI \u2014 command-line interface for the Upbit API",
+  "version": "0.9.1",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/upbit-official/upbit-cli.git"
+  },
+  "homepage": "https://github.com/upbit-official/upbit-cli",
+  "bin": {
+    "upbit": "run.js"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "preferUnplugged": true,
+  "keywords": [
+    "upbit",
+    "cli",
+    "cryptocurrency",
+    "exchange",
+    "api"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
