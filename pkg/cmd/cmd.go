@@ -102,6 +102,15 @@ func init() {
 					}
 				},
 			},
+			&cli.StringSliceFlag{
+				Name:    "header",
+				Aliases: []string{"H"},
+				Usage:   "Add a custom header to requests, e.g. --header 'X-Foo: bar'. May be repeated.",
+				Validator: func(headers []string) error {
+					_, err := parseHeaderFlags(headers)
+					return err
+				},
+			},
 		},
 		Commands: []*cli.Command{
 			{

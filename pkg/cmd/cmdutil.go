@@ -118,7 +118,104 @@ func getDefaultRequestOptions(cmd *cli.Command) []option.RequestOption {
 		}
 	}
 
+	// Apply any custom headers passed via --header / -H. Header options must be applied
+	// as a middleware (not via option.WithHeader directly): WithHeader touches the request
+	// immediately, but at client-construction time there is no request yet, so it would
+	// panic. The middleware runs per request, once the *http.Request exists.
+	if raw := cmd.StringSlice("header"); len(raw) > 0 {
+		if parsed, err := parseHeaderFlags(raw); err == nil {
+			if len(parsed) > 0 {
+				opts = append(opts, headerMiddlewareOption(parsed))
+			}
+		} else {
+			// The --header flag validator in cmd.go rejects malformed values, so this
+			// branch should be unreachable in practice; warn rather than fail silently.
+			fmt.Fprintf(os.Stderr, "warning: could not apply --header values: %v\n", err)
+		}
+	}
+
 	return opts
+}
+
+// reservedHeaderKeys are the exact header keys the CLI reserves for itself. They must not be
+// overridable via --header: a user-supplied value for any of these keys is silently ignored so
+// the CLI's own value always wins. Keys are stored in canonical form (http.CanonicalHeaderKey)
+// for case-insensitive matching.
+//
+// Authorization is included because the SDK signs each request with a JWT derived from the
+// credentials; letting --header replace it would break authentication. Any header in the
+// X-Upbit-Client-* namespace is also reserved — see isReservedHeader / reservedHeaderPrefix.
+var reservedHeaderKeys = map[string]bool{
+	http.CanonicalHeaderKey("User-Agent"):    true,
+	http.CanonicalHeaderKey("Authorization"): true,
+}
+
+// reservedHeaderPrefix reserves the X-Upbit-Client-* header namespace for the CLI, so
+// client-identity headers (X-Upbit-Client-Type, -Name, -Version) and any future X-Upbit-Client-*
+// header cannot be overridden via --header. Other X-Upbit-* headers (e.g. X-Upbit-Initiator) are
+// deliberately NOT reserved and remain user-settable. Stored in canonical form for
+// case-insensitive matching.
+var reservedHeaderPrefix = http.CanonicalHeaderKey("X-Upbit-Client-")
+
+// isReservedHeader reports whether canonical (already run through http.CanonicalHeaderKey) is a
+// header the CLI owns and thus must not be overridable via --header.
+func isReservedHeader(canonical string) bool {
+	return reservedHeaderKeys[canonical] || strings.HasPrefix(canonical, reservedHeaderPrefix)
+}
+
+// headerFlag is a single parsed --header value. add is false for the first occurrence of a
+// given (canonical) key — applied with Header.Set, overwriting any prior value — and true for
+// subsequent occurrences of the same key, applied with Header.Add so repeated --header flags
+// build a multi-value header.
+type headerFlag struct {
+	key   string
+	value string
+	add   bool
+}
+
+// parseHeaderFlags parses raw "Key: Value" header flag values. The first occurrence of a given
+// canonical key is marked for Set; later occurrences of the same key are marked for Add.
+//
+// Values for reserved keys (see reservedHeaderKeys) are silently skipped so the CLI's own
+// client-identity and auth headers cannot be overridden by --header.
+func parseHeaderFlags(headers []string) ([]headerFlag, error) {
+	var parsed []headerFlag
+	seen := make(map[string]bool)
+	for _, h := range headers {
+		key, value, found := strings.Cut(h, ":")
+		if !found {
+			return nil, fmt.Errorf("invalid header %q: expected format 'Key: Value'", h)
+		}
+		key = strings.TrimSpace(key)
+		value = strings.TrimSpace(value)
+		if key == "" {
+			return nil, fmt.Errorf("invalid header %q: header key must not be empty", h)
+		}
+		canonical := http.CanonicalHeaderKey(key)
+		// Reserved headers are owned by the CLI and cannot be overridden; skip silently.
+		if isReservedHeader(canonical) {
+			continue
+		}
+		parsed = append(parsed, headerFlag{key: key, value: value, add: seen[canonical]})
+		seen[canonical] = true
+	}
+	return parsed, nil
+}
+
+// headerMiddlewareOption returns a request option that applies the parsed headers to each
+// outgoing request. Reserved headers (client-identity and auth) are already filtered out by
+// parseHeaderFlags, so nothing here can override a CLI-owned header.
+func headerMiddlewareOption(parsed []headerFlag) option.RequestOption {
+	return option.WithMiddleware(func(req *http.Request, next option.MiddlewareNext) (*http.Response, error) {
+		for _, hf := range parsed {
+			if hf.add {
+				req.Header.Add(hf.key, hf.value)
+			} else {
+				req.Header.Set(hf.key, hf.value)
+			}
+		}
+		return next(req)
+	})
 }
 
 var debugMiddlewareOption = option.WithMiddleware(

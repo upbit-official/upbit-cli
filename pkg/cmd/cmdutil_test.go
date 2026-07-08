@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -154,6 +155,154 @@ func TestValidateBaseURL(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "--base-url")
 	})
+}
+
+func TestParseHeaderFlags(t *testing.T) {
+	t.Parallel()
+
+	t.Run("SingleHeader", func(t *testing.T) {
+		t.Parallel()
+
+		parsed, err := parseHeaderFlags([]string{"X-Foo: bar"})
+		require.NoError(t, err)
+		require.Len(t, parsed, 1)
+		assert.Equal(t, headerFlag{key: "X-Foo", value: "bar", add: false}, parsed[0])
+	})
+
+	t.Run("TrimsSurroundingWhitespace", func(t *testing.T) {
+		t.Parallel()
+
+		captured := applyHeaderOptsToRequest(t, []string{"  X-Foo  :   bar  "})
+		assert.Equal(t, "bar", captured.Get("X-Foo"))
+	})
+
+	t.Run("ValueMayContainColon", func(t *testing.T) {
+		t.Parallel()
+
+		captured := applyHeaderOptsToRequest(t, []string{"X-Trace: a:b:c"})
+		assert.Equal(t, "a:b:c", captured.Get("X-Trace"))
+	})
+
+	t.Run("MissingColonIsError", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := parseHeaderFlags([]string{"X-Foo bar"})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "Key: Value")
+	})
+
+	t.Run("EmptyKeyIsError", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := parseHeaderFlags([]string{": bar"})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "must not be empty")
+	})
+
+	t.Run("EmptyValueIsAllowed", func(t *testing.T) {
+		t.Parallel()
+
+		parsed, err := parseHeaderFlags([]string{"X-Foo:"})
+		require.NoError(t, err)
+		require.Len(t, parsed, 1)
+		assert.Equal(t, "", parsed[0].value)
+	})
+
+	t.Run("RepeatedKeyAppends", func(t *testing.T) {
+		t.Parallel()
+
+		// First value sets, subsequent values of the same (canonical) key append,
+		// producing a multi-value header.
+		parsed, err := parseHeaderFlags([]string{"X-Multi: a", "x-multi: b"})
+		require.NoError(t, err)
+		require.Len(t, parsed, 2)
+		assert.False(t, parsed[0].add, "first occurrence should Set")
+		assert.True(t, parsed[1].add, "repeated occurrence should Add")
+
+		captured := applyHeaderOptsToRequest(t, []string{"X-Multi: a", "x-multi: b"})
+		assert.Equal(t, []string{"a", "b"}, captured.Values("X-Multi"))
+	})
+
+	t.Run("ReservedHeadersAreSkipped", func(t *testing.T) {
+		t.Parallel()
+
+		// Every reserved key must be dropped during parsing regardless of the casing the
+		// user typed, so the CLI's own client-identity / auth values are never overridden.
+		reserved := []string{
+			"User-Agent: evil",
+			"user-agent: evil",
+			"X-Upbit-Client-Type: evil",
+			"x-upbit-client-name: evil",
+			"X-UPBIT-CLIENT-VERSION: evil",
+			"Authorization: Bearer evil",
+			"authorization: Bearer evil",
+		}
+		for _, h := range reserved {
+			parsed, err := parseHeaderFlags([]string{h})
+			require.NoError(t, err, "header %q", h)
+			assert.Empty(t, parsed, "reserved header %q should be skipped", h)
+		}
+	})
+
+	t.Run("ReservedHeadersSkippedButOthersKept", func(t *testing.T) {
+		t.Parallel()
+
+		// A reserved key mixed with a normal key: only the normal key survives.
+		parsed, err := parseHeaderFlags([]string{"X-Upbit-Client-Type: evil", "X-Foo: bar"})
+		require.NoError(t, err)
+		require.Len(t, parsed, 1)
+		assert.Equal(t, headerFlag{key: "X-Foo", value: "bar", add: false}, parsed[0])
+	})
+
+	t.Run("ReservedHeaderCannotOverrideClientIdentity", func(t *testing.T) {
+		t.Parallel()
+
+		// A --header targeting a client-identity key must NOT win: the CLI's own value
+		// is preserved because parseHeaderFlags drops the reserved key entirely.
+		captured := applyHeaderOptsToRequest(t, []string{"X-Upbit-Client-Type: custom"})
+		assert.Equal(t, "cli", captured.Get("X-Upbit-Client-Type"))
+	})
+}
+
+// applyHeaderOptsToRequest parses the given --header values through a real urfave/cli command,
+// builds request options via getDefaultRequestOptions (so the client-identity middleware ordering
+// is exercised too), issues a request against a test server, and returns the headers it observed.
+func applyHeaderOptsToRequest(t *testing.T, headers []string) http.Header {
+	t.Helper()
+
+	var captured http.Header
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		captured = r.Header.Clone()
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`[]`))
+	}))
+	defer server.Close()
+
+	cmd := &cli.Command{
+		Name: "test",
+		Flags: []cli.Flag{
+			&cli.StringSliceFlag{Name: "header", Aliases: []string{"H"}},
+		},
+		Action: func(ctx context.Context, c *cli.Command) error {
+			opts := getDefaultRequestOptions(c)
+			opts = append(opts,
+				option.WithAccessKey("test-access-key"),
+				option.WithSecretKey("test-secret-key"),
+				option.WithBaseURL(server.URL),
+			)
+			client := upbit.NewClient(opts...)
+			_, _ = client.TradingPairs.List(ctx, upbit.TradingPairListParams{})
+			return nil
+		},
+	}
+
+	args := []string{"test"}
+	for _, h := range headers {
+		args = append(args, "--header", h)
+	}
+	require.NoError(t, cmd.Run(t.Context(), args))
+
+	return captured
 }
 
 func TestDefaultRequestOptionsHeaders(t *testing.T) {
