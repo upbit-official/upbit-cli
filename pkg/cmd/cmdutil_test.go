@@ -343,6 +343,13 @@ func TestDefaultRequestOptionsHeaders(t *testing.T) {
 	assert.NotEmpty(t, captured.Get("X-Upbit-Client-Version"), "X-Upbit-Client-Version should be set")
 }
 
+func TestDefaultRequestOptionsIgnoreDeprecatedCustomHeadersEnv(t *testing.T) {
+	t.Setenv("UPBIT_CUSTOM_HEADERS", "X-Env-Header: should-not-be-sent")
+
+	captured := applyHeaderOptsToRequest(t, nil)
+	assert.Empty(t, captured.Get("X-Env-Header"))
+}
+
 func TestFormatJSON(t *testing.T) {
 	t.Parallel()
 

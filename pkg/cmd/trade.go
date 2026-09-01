@@ -14,7 +14,7 @@ import (
 
 var tradesList = cli.Command{
 	Name:    "list",
-	Usage:   "Recent Trades History",
+	Usage:   "List Pair Trades",
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{

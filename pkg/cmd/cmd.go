@@ -148,6 +148,20 @@ func init() {
 				},
 			},
 			{
+				Name:     "pockets",
+				Category: "API RESOURCE",
+				Suggest:  true,
+				Commands: []*cli.Command{
+					&pocketsList,
+					&pocketsListAPIKeys,
+					&pocketsListTransfers,
+					&pocketsListUniversalTransfers,
+					&pocketsRetrieveBalance,
+					&pocketsTransfer,
+					&pocketsUniversalTransfer,
+				},
+			},
+			{
 				Name:     "orders",
 				Category: "API RESOURCE",
 				Suggest:  true,

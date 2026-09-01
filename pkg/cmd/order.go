@@ -364,7 +364,7 @@ var ordersRetrieveChance = cli.Command{
 
 var ordersTestCreate = cli.Command{
 	Name:    "test-create",
-	Usage:   "Test Order Creation",
+	Usage:   "Test Order",
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{

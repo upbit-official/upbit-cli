@@ -29,7 +29,7 @@ To protect our community, we ask that you:
 
 Upbit will make reasonable efforts to:
 
-- Acknowledge receipt of your report
+- Acknowledge receipt of your report.
 - Investigate and validate the reported issue thoroughly.
-- Work on a fix or mitigation and release an updated SDK, project, or guidance where applicable
+- Work on a fix or mitigation and release an updated SDK, project, or guidance where applicable.
 - Keep you informed of our progress during the triage and remediation process.
