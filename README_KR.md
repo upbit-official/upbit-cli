@@ -16,7 +16,7 @@ npm install -g @upbit-official/upbit-cli
 
 ### Go로 설치하기
 
-CLI를 로컬에서 테스트하거나 설치하려면 [Go](https://go.dev/doc/install) 1.22 이상이 필요합니다.
+CLI를 로컬에서 테스트하거나 설치하려면 [Go](https://go.dev/doc/install) 1.25 이상이 필요합니다.
 
 ```sh
 go install 'github.com/upbit-official/upbit-cli/cmd/upbit@latest'
@@ -45,6 +45,10 @@ export PATH="$PATH:$(go env GOPATH)/bin"
 ```
 
 ## 사용법
+
+### 인도네시아 API 주소
+
+CLI v1.0.1에서 `--environment id`는 `https://api.upbit.co.id/`를 사용한다. `id-api.upbit.com`을 사용하는 구버전은 `--base-url https://api.upbit.co.id/`로 주소를 지정한다. 직접 설정한 주소는 CLI 업데이트 후에도 유지되므로 별도로 갱신한다.
 
 CLI는 리소스 기반 명령 구조를 따릅니다.
 
@@ -100,7 +104,7 @@ upbit accounts list \
 ./scripts/link ../path/to/upbit-go
 ```
 
-인자 없이 실행하면 기본값은 `../upbit-go`입니다.
+인자 없이 실행하면 기본값은 `../upbit-sdk-go-internal`입니다.
 
 ## 버전 관리
 

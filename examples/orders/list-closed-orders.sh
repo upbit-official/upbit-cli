@@ -6,6 +6,4 @@ export UPBIT_SECRET_KEY="${UPBIT_SECRET_KEY}"
 
 # default
 upbit orders list-closed \
-  --market "KRW-BTC" \
-  --state "done" \
-  --state "cancel"
+  --market "KRW-BTC"

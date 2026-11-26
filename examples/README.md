@@ -4,8 +4,9 @@ English | [한국어](./README_KR.md)
 
 This directory contains examples that demonstrate the key features of the Upbit CLI SDK in scenario-based flows.
 
-Each example is written based on real trading workflows and runs in **Dry run mode** by default.
-In dry run mode, only read operations are performed — write operations such as placing orders or making withdrawals are skipped.
+This directory contains scenario examples and generated per-endpoint examples.
+Scenario examples that implement `DRY_RUN` skip their guarded write operations by default; read and order-test APIs still make real requests.
+Generated examples in resource subdirectories, such as [`orders/`](./orders/), do not implement `DRY_RUN`. Running them sends requests to the corresponding APIs, including real order or withdrawal requests.
 
 > **Note:** Per-endpoint examples are organized in feature-specific subdirectories within this directory (e.g., [`examples/orders/`](./orders/) for order-related examples). For Korean scenario examples, see [`README_KR.md`](README_KR.md).
 
@@ -138,6 +139,8 @@ UPBIT_ACCESS_KEY=<key> UPBIT_SECRET_KEY=<secret> bash examples/withdrawals.sh
 ```
 
 ---
+
+When `DRY_RUN=false`, the KR withdrawal scenario ([`withdrawals_kr.sh`](./withdrawals_kr.sh)) can request a KRW withdrawal using the default amount of 10,000 KRW and `kakao` authentication without editing the code. Digital asset withdrawals require an actual withdrawal address.
 
 ### `dca.sh` — DCA Automated Recurring Buy
 

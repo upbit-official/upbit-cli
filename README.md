@@ -16,7 +16,7 @@ npm install -g @upbit-official/upbit-cli
 
 ### Installing with Go
 
-To test or install the CLI locally, you need [Go](https://go.dev/doc/install) version 1.22 or later installed.
+To test or install the CLI locally, you need [Go](https://go.dev/doc/install) version 1.25 or later installed.
 
 ```sh
 go install 'github.com/upbit-official/upbit-cli/cmd/upbit@latest'
@@ -46,6 +46,10 @@ After cloning the git repository for this project, you can use the
 ```
 
 ## Usage
+
+### Indonesia API host
+
+CLI v1.0.1 uses `https://api.upbit.co.id/` with `--environment id`. For older versions that use `id-api.upbit.com`, override the host with `--base-url https://api.upbit.co.id/`. Update any explicit base URL when upgrading; custom URLs retain their configured values.
 
 The CLI follows a resource-based command structure:
 
@@ -106,7 +110,7 @@ To link to a local copy of the SDK:
 ./scripts/link ../path/to/upbit-go
 ```
 
-If you run the link script without any arguments, it will default to `../upbit-go`.
+If you run the link script without any arguments, it will default to `../upbit-sdk-go-internal`.
 
 ## Versioning
 

@@ -82,8 +82,8 @@ section_setup() {
     printf "  기준가:     %.0f KRW (현재가)\n" "$BASE_PRICE"
   fi
 
-  TP_PRICE=$(echo "scale=0; $BASE_PRICE * (1 + $TP_PERCENT / 100) / 1" | bc)
-  SL_PRICE=$(echo "scale=0; $BASE_PRICE * (1 - $SL_PERCENT / 100) / 1" | bc)
+  TP_PRICE=$(echo "scale=0; $BASE_PRICE * (100 + $TP_PERCENT) / 100" | bc)
+  SL_PRICE=$(echo "scale=0; $BASE_PRICE * (100 - $SL_PERCENT) / 100" | bc)
 
   echo "  마켓:       $MARKET"
   echo "  매도 수량:  $SELL_VOLUME"

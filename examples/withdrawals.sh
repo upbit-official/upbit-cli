@@ -12,7 +12,7 @@
 #   Read-only lookups of withdrawal-related information.
 #
 # Live run (DRY_RUN=false):
-#   Edit this file to set the address/amount before running a real withdrawal.
+#   Requests a KRW withdrawal with 10,000 KRW and kakao by default. Digital asset withdrawals require an actual address.
 #   WARNING: Withdrawals cannot be reversed. Mis-typed addresses will lose funds.
 #
 # Usage:

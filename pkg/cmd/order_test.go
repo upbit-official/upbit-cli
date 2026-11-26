@@ -81,7 +81,7 @@ func TestOrdersCancelAndNew(t *testing.T) {
 			"--new-price", "100000000",
 			"--new-smp-type", "cancel_maker",
 			"--new-time-in-force", "fok",
-			"--new-volume", "remain_only",
+			"--new-volume", "1",
 			"--prev-order-identifier", "9ca023a5-851b-4fec-9f0a-48cd83c2eaae",
 			"--prev-order-uuid", "ad217e24-ed02-469c-9b30-c08dbbda6908",
 		)
@@ -95,7 +95,7 @@ func TestOrdersCancelAndNew(t *testing.T) {
 			"new_price: '100000000'\n" +
 			"new_smp_type: cancel_maker\n" +
 			"new_time_in_force: fok\n" +
-			"new_volume: remain_only\n" +
+			"new_volume: '1'\n" +
 			"prev_order_identifier: 9ca023a5-851b-4fec-9f0a-48cd83c2eaae\n" +
 			"prev_order_uuid: ad217e24-ed02-469c-9b30-c08dbbda6908\n")
 		mocktest.TestRunMockTestWithPipeAndFlags(

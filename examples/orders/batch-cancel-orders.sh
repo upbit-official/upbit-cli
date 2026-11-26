@@ -7,5 +7,4 @@ export UPBIT_SECRET_KEY="${UPBIT_SECRET_KEY}"
 # default
 upbit orders cancel-open \
   --quote-currencies "KRW,BTC" \
-  --cancel-side "all" \
   --excluded-pairs "KRW-ETH,BTC-XRP"

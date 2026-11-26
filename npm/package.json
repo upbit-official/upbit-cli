@@ -1,7 +1,7 @@
 {
   "name": "@upbit-official/upbit-cli",
-  "description": "Upbit CLI \u2014 command-line interface for the Upbit API",
-  "version": "1.0.0",
+  "description": "Upbit CLI — command-line interface for the Upbit API",
+  "version": "1.0.1",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

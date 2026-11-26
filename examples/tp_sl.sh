@@ -83,8 +83,8 @@ section_setup() {
     printf "  Base price:    %.0f KRW (current price)\n" "$BASE_PRICE"
   fi
 
-  TP_PRICE=$(echo "scale=0; $BASE_PRICE * (1 + $TP_PERCENT / 100) / 1" | bc)
-  SL_PRICE=$(echo "scale=0; $BASE_PRICE * (1 - $SL_PERCENT / 100) / 1" | bc)
+  TP_PRICE=$(echo "scale=0; $BASE_PRICE * (100 + $TP_PERCENT) / 100" | bc)
+  SL_PRICE=$(echo "scale=0; $BASE_PRICE * (100 - $SL_PERCENT) / 100" | bc)
 
   echo "  Market:        $MARKET"
   echo "  Sell volume:   $SELL_VOLUME"

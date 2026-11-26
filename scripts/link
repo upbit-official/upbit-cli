@@ -5,9 +5,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # Mark the necessary Go modules as private to avoid Go's proxy
-export GOPRIVATE="${GOPRIVATE:+$GOPRIVATE,}github.com/upbit-official/upbit-sdk-go,github.com/stainless-sdks/upbit-go"
+export GOPRIVATE="${GOPRIVATE:+$GOPRIVATE,}github.com/upbit-official/upbit-sdk-go,github.com/dunamu-dev-upbit/upbit-sdk-go-internal"
 
-REPLACEMENT="${1:-"../upbit-go"}"
+REPLACEMENT="${1:-"../upbit-sdk-go-internal"}"
 echo "==> Replacing Go SDK with $REPLACEMENT"
 if [[ -d "$REPLACEMENT" ]] || go list -m "$REPLACEMENT" >/dev/null; then
     go mod edit -replace github.com/upbit-official/upbit-sdk-go="$REPLACEMENT"

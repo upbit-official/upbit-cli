@@ -20,8 +20,8 @@ type (
 const redactedPlaceholder = "<REDACTED>"
 
 // Headers known to contain sensitive information like an API key. Note that this exclude `Authorization`,
-// which is handled specially in `redactRequest` below.
-var sensitiveHeaders = []string{}
+// which is handled specially in `redactHeaders` below.
+var sensitiveHeaders = []string{"api-key", "x-api-key", "cookie", "set-cookie"}
 
 // RequestLogger is a middleware that logs HTTP requests and responses.
 type RequestLogger struct {
@@ -52,7 +52,7 @@ func (m *RequestLogger) Middleware() Middleware {
 			return resp, err
 		}
 
-		if respBytes, err := httputil.DumpResponse(resp, true); err == nil {
+		if respBytes, err := m.dumpRedactedResponse(resp); err == nil {
 			m.logger.Printf("Response Content:\n%s\n", respBytes)
 		}
 
@@ -65,37 +65,7 @@ func (m *RequestLogger) Middleware() Middleware {
 // the original and that clone is returned. As a small optimization, the
 // original is request is returned unchanged if no redaction is necessary.
 func (m *RequestLogger) redactRequest(req *http.Request) (*http.Request, error) {
-	redactedHeaders := req.Header.Clone()
-
-	// Notably, the clauses below are written so they can redact multiple
-	// headers of the same name if necessary.
-	if values := redactedHeaders.Values("Authorization"); len(values) > 0 {
-		redactedHeaders.Del("Authorization")
-
-		for _, value := range values {
-			// In case we're using something like a bearer token (e.g. `Bearer
-			// <my_token>`), keep the `Bearer` part for more debugging
-			// information.
-			if authKind, _, ok := strings.Cut(value, " "); ok {
-				redactedHeaders.Add("Authorization", authKind+" "+redactedPlaceholder)
-			} else {
-				redactedHeaders.Add("Authorization", redactedPlaceholder)
-			}
-		}
-	}
-
-	for _, header := range m.sensitiveHeaders {
-		values := redactedHeaders.Values(header)
-		if len(values) == 0 {
-			continue
-		}
-
-		redactedHeaders.Del(header)
-
-		for range values {
-			redactedHeaders.Add(header, redactedPlaceholder)
-		}
-	}
+	redactedHeaders := m.redactHeaders(req.Header)
 
 	if reflect.DeepEqual(req.Header, redactedHeaders) {
 		return req, nil
@@ -106,6 +76,49 @@ func (m *RequestLogger) redactRequest(req *http.Request) (*http.Request, error) 
 	var err error
 	redacted.Body, req.Body, err = cloneBody(req.Body)
 	return redacted, err
+}
+
+// DumpResponse restores the response body after reading it. Use the original
+// response so that callers keep that readable body, and restore its headers even
+// when dumping fails or panics.
+func (m *RequestLogger) dumpRedactedResponse(resp *http.Response) ([]byte, error) {
+	original := resp.Header
+	resp.Header = m.redactHeaders(original)
+	defer func() { resp.Header = original }()
+	return httputil.DumpResponse(resp, true)
+}
+
+func (m *RequestLogger) redactHeaders(headers http.Header) http.Header {
+	redactedHeaders := headers.Clone()
+
+	// Inspect actual map keys: Header.Values only finds canonicalized keys,
+	// while custom transports can supply lowercase or mixed-case duplicates.
+	for key, values := range redactedHeaders {
+		if strings.EqualFold(key, "Authorization") {
+			for i, value := range values {
+				// In case we're using something like a bearer token (e.g. `Bearer
+				// <my_token>`), keep the `Bearer` part for more debugging
+				// information.
+				if authKind, _, ok := strings.Cut(value, " "); ok {
+					values[i] = authKind + " " + redactedPlaceholder
+				} else {
+					values[i] = redactedPlaceholder
+				}
+			}
+			continue
+		}
+		for _, header := range m.sensitiveHeaders {
+			if !strings.EqualFold(key, header) {
+				continue
+			}
+			for i := range values {
+				values[i] = redactedPlaceholder
+			}
+			break
+		}
+	}
+
+	return redactedHeaders
 }
 
 // This function returns two copies of an HTTP request body that can each be

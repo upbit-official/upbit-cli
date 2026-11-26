@@ -8,4 +8,5 @@ export UPBIT_SECRET_KEY="${UPBIT_SECRET_KEY}"
 upbit orders cancel-and-new \
   --prev-order-uuid "ad217e24-ed02-469c-9b30-c08dbbda6908" \
   --new-ord-type "limit" \
+  --new-volume "1" \
   --new-price "100000000"

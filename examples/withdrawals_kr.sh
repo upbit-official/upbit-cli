@@ -12,12 +12,12 @@
 #   출금 관련 정보 조회만 수행합니다.
 #
 # 실제 실행 (DRY_RUN=false):
-#   실제 출금은 코드에서 주소/금액을 수정한 뒤 실행하세요.
+#   원화 출금은 기본 10,000원·kakao로 요청합니다. 디지털 자산 출금은 실제 주소 입력이 필요합니다.
 #   주의: 출금은 비가역적입니다. 잘못된 주소로 출금하면 자산을 잃을 수 있습니다.
 #
 # 실행:
-#   UPBIT_ACCESS_KEY=<key> UPBIT_SECRET_KEY=<secret> bash examples/withdrawals.sh
-#   DRY_RUN=false UPBIT_ACCESS_KEY=<key> UPBIT_SECRET_KEY=<secret> bash examples/withdrawals.sh
+#   UPBIT_ACCESS_KEY=<key> UPBIT_SECRET_KEY=<secret> bash examples/withdrawals_kr.sh
+#   DRY_RUN=false UPBIT_ACCESS_KEY=<key> UPBIT_SECRET_KEY=<secret> bash examples/withdrawals_kr.sh
 
 set -euo pipefail
 

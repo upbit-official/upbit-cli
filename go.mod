@@ -14,7 +14,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/pretty v1.2.1
-	github.com/upbit-official/upbit-sdk-go v1.0.0
+	github.com/upbit-official/upbit-sdk-go v1.0.1
 	github.com/urfave/cli-docs/v3 v3.0.0-alpha6
 	github.com/urfave/cli/v3 v3.3.2
 	golang.org/x/sys v0.38.0
